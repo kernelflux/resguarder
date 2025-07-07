@@ -6,29 +6,61 @@ import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 
 object Resguarder {
-    private val isInHook = ThreadLocal<Boolean>()
+    const val TAG = "resguarder_tag"
 
-    init {
-        isInHook.set(false)
+    private val isInHook = object : ThreadLocal<Boolean>() {
+        override fun initialValue(): Boolean = false
+    }
+    private var mIResguarderCallback: IResguarder? = null
+
+
+    @JvmStatic
+    fun setResguarderCallback(callback: IResguarder) {
+        mIResguarderCallback = callback
+    }
+
+    private inline fun <T> safeHook(block: () -> T): T {
+        return if (isInHook.get() == true) {
+            block()
+        } else {
+            isInHook.set(true)
+            try {
+                block()
+            } finally {
+                isInHook.set(false)
+            }
+        }
     }
 
     @JvmStatic
-    fun init(application: Application){
+    fun init(application: Application) {
         application.registerActivityLifecycleCallbacks(object :
             Application.ActivityLifecycleCallbacks {
+            @SuppressLint("PrivateApi")
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 val inflater = LayoutInflater.from(activity)
-                val oldFactory2 = try { inflater.factory2 } catch (e: Exception) { null }
+
+                val oldFactory2 = try {
+                    val field = LayoutInflater::class.java.getDeclaredField("mFactory2")
+                    field.isAccessible = true
+                    field.get(inflater) as? LayoutInflater.Factory2
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
                 val delegates = mutableListOf<LayoutInflater.Factory2>()
                 if (oldFactory2 != null) delegates.add(oldFactory2)
-                val myHandler: (View?, String, Context, AttributeSet) -> View? = { view, name, context, attrs -> handle(view,name,context,attrs) }
+                val myHandler: (View?, String, Context, AttributeSet) -> View? =
+                    { view, name, context, attrs -> handle(view, name, context, attrs) }
                 forceSetFactory2(inflater, ProxyFactory2(delegates, myHandler))
             }
+
             override fun onActivityStarted(activity: Activity) {}
             override fun onActivityResumed(activity: Activity) {}
             override fun onActivityPaused(activity: Activity) {}
@@ -40,7 +72,7 @@ object Resguarder {
 
 
     @JvmStatic
-    private fun handle(view:View?, name:String, context:Context,attrs: AttributeSet): View?{
+    private fun handle(view: View?, name: String, context: Context, attrs: AttributeSet): View? {
         if (view is ImageView) {
             val srcResId = attrs.getAttributeResourceValue(
                 "http://schemas.android.com/apk/res/android",
@@ -89,28 +121,27 @@ object Resguarder {
 
     @JvmStatic
     fun loadImageResource(view: ImageView, resId: Int) {
-        if (isInHook.get() == true) {
-            view.setImageResource(resId)
-        } else {
-            isInHook.set(true)
-            try {
+        safeHook {
+            if (ResguarderUtils.isBigImage(resId)) {
+                Log.i(TAG, "loadImageResource isBigImage resId:$resId")
+                mIResguarderCallback?.loadImageResource(view, resId) ?: view.setImageResource(resId)
+            } else {
+                Log.i(TAG, "loadImageResource isNotBigImage resId:$resId")
                 view.setImageResource(resId)
-            } finally {
-                isInHook.set(false)
             }
         }
     }
 
     @JvmStatic
     fun loadBackgroundResource(view: View, resId: Int) {
-        if (isInHook.get() == true) {
-            view.setBackgroundResource(resId)
-        } else {
-            isInHook.set(true)
-            try {
+        safeHook {
+            if (ResguarderUtils.isBigImage(resId)) {
+                Log.i(TAG, "loadBackgroundResource isBigImage resId:$resId")
+                mIResguarderCallback?.loadBackgroundResource(view, resId)
+                    ?: view.setBackgroundResource(resId)
+            } else {
+                Log.i(TAG, "loadBackgroundResource isNotBigImage resId:$resId")
                 view.setBackgroundResource(resId)
-            } finally {
-                isInHook.set(false)
             }
         }
     }

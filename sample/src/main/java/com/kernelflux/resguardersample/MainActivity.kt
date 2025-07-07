@@ -11,10 +11,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        val bgView=findViewById<ImageView>(R.id.aci_bg)
-        bgView.setImageResource(R.drawable.ic_bg)
-
     }
 
 }
