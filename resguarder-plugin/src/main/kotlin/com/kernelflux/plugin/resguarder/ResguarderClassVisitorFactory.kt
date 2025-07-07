@@ -9,27 +9,18 @@ import org.gradle.api.tasks.Input
 import org.objectweb.asm.ClassVisitor
 
 abstract class ResguarderClassVisitorFactory :
-    AsmClassVisitorFactory<ResguarderClassVisitorFactory.Params> {
-
-    interface Params : InstrumentationParameters {
-        @get:Input
-        val bigImageResIds: SetProperty<Int>
-
-        @get:Input
-        val resIdTypeMap: MapProperty<Int, String>
-    }
+    AsmClassVisitorFactory<InstrumentationParameters.None> {
 
     override fun createClassVisitor(
         classContext: ClassContext,
         nextClassVisitor: ClassVisitor
     ): ClassVisitor {
-        return ResguarderClassVisitor(
-            nextClassVisitor,
-            parameters.get().resIdTypeMap.get(),
-            parameters.get().bigImageResIds.get()
-        )
+        return ResguarderClassVisitor(nextClassVisitor)
     }
 
-    override fun isInstrumentable(classData: com.android.build.api.instrumentation.ClassData): Boolean =
-        true
+    override fun isInstrumentable(classData: com.android.build.api.instrumentation.ClassData): Boolean {
+        val clzName = classData.className.replace("/", ".")
+        return clzName.startsWith("com.kernelflux") && !clzName.startsWith("com.kernelflux.resguarder.Resguarder")
+    }
+
 }

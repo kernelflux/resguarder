@@ -16,13 +16,13 @@ class ResguarderViewFactory(private val delegate: LayoutInflater.Factory2?) : La
                 "src",
                 0
             )
+            if (srcResId != 0) Resguarder.loadImageResource(view, srcResId)
             val bgResId = attrs.getAttributeResourceValue(
                 "http://schemas.android.com/apk/res/android",
                 "background",
                 0
             )
-            if (srcResId != 0) ResguarderImageLoader.load(view, srcResId)
-            if (bgResId != 0) ResguarderImageLoader.load(view, bgResId)
+            if (bgResId != 0) Resguarder.loadBackgroundResource(view, bgResId)
         }
         return view
     }

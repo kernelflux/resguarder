@@ -11,6 +11,11 @@ import android.view.View
 import android.widget.ImageView
 
 object Resguarder {
+    private val isInHook = ThreadLocal<Boolean>()
+
+    init {
+        isInHook.set(false)
+    }
 
     @JvmStatic
     fun init(application: Application){
@@ -59,11 +64,11 @@ object Resguarder {
                 0
             )
 
-            if (srcResId != 0) ResguarderImageLoader.load(view, srcResId)
-            if (bgResId != 0) ResguarderImageLoader.load(view, bgResId)
+            if (srcResId != 0) loadImageResource(view, srcResId)
+            if (bgResId != 0) loadBackgroundResource(view, bgResId)
 
-            if (srcResId2 != 0) ResguarderImageLoader.load(view, srcResId2)
-            if (bgResId2 != 0) ResguarderImageLoader.load(view, bgResId2)
+            if (srcResId2 != 0) loadImageResource(view, srcResId2)
+            if (bgResId2 != 0) loadBackgroundResource(view, bgResId2)
         }
 
         return view
@@ -80,5 +85,35 @@ object Resguarder {
             e.printStackTrace()
         }
     }
+
+
+    @JvmStatic
+    fun loadImageResource(view: ImageView, resId: Int) {
+        if (isInHook.get() == true) {
+            view.setImageResource(resId)
+        } else {
+            isInHook.set(true)
+            try {
+                view.setImageResource(resId)
+            } finally {
+                isInHook.set(false)
+            }
+        }
+    }
+
+    @JvmStatic
+    fun loadBackgroundResource(view: View, resId: Int) {
+        if (isInHook.get() == true) {
+            view.setBackgroundResource(resId)
+        } else {
+            isInHook.set(true)
+            try {
+                view.setBackgroundResource(resId)
+            } finally {
+                isInHook.set(false)
+            }
+        }
+    }
+
 
 }
