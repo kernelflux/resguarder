@@ -11,7 +11,7 @@ object ResguarderLogger {
     @JvmStatic
     fun init(project: Project) {
         if (enableFileLog) {
-            logFile = project.layout.buildDirectory.file("outputs/bigimage_aop_log.txt").get().asFile
+            logFile = project.layout.buildDirectory.file("outputs/resource_aop_log.txt").get().asFile
             logFile?.writeText("")
         }
     }

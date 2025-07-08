@@ -7,6 +7,8 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.Input
 import org.objectweb.asm.ClassVisitor
+import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Opcodes
 
 abstract class ResguarderClassVisitorFactory :
     AsmClassVisitorFactory<InstrumentationParameters.None> {
@@ -15,7 +17,18 @@ abstract class ResguarderClassVisitorFactory :
         classContext: ClassContext,
         nextClassVisitor: ClassVisitor
     ): ClassVisitor {
-        return ResguarderClassVisitor(nextClassVisitor)
+        return object : ClassVisitor(Opcodes.ASM9, nextClassVisitor) {
+            override fun visitMethod(
+                access: Int,
+                name: String,
+                desc: String,
+                signature: String?,
+                exceptions: Array<out String>?
+            ): MethodVisitor {
+                val mv = super.visitMethod(access, name, desc, signature, exceptions)
+                return ResguarderMethodVisitor(mv)
+            }
+        }
     }
 
     override fun isInstrumentable(classData: com.android.build.api.instrumentation.ClassData): Boolean {

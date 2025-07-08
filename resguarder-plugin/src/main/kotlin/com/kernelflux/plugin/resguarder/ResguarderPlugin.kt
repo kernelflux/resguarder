@@ -19,12 +19,13 @@ class ResguarderPlugin : Plugin<Project> {
         androidComponents.onVariants { variant ->
             ResguarderLogger.log("ResguarderPlugin apply2 variant:${variant.name}")
 
-            val taskName = "generateBigImagesConstantsFor${
+            val taskName = "generateResourceConstantsFor${
                 variant.name.replaceFirstChar { it.titlecase(Locale.ROOT) }
             }"
             val taskProvider =
-                project.tasks.register(taskName, GenerateBigImagesConstantsTask::class.java) {
+                project.tasks.register(taskName, GenerateResourceConstantsTask::class.java) {
                     variantName.set(variant.name)
+                    generateClzName.set(ext.resguarderResGenerateClassName)
                     maxWidth.set(ext.maxWidth)
                     maxHeight.set(ext.maxHeight)
                     maxFileSize.set(ext.maxFileSize)
@@ -35,18 +36,23 @@ class ResguarderPlugin : Plugin<Project> {
                     outputDir.set(project.layout.buildDirectory.dir("generated/resguarder/com/kernelflux/resguarder"))
                 }
 
-            // 让 Java 源集包含生成目录
+            // 1. add to sourceSet
             variant.sources.java?.addStaticSourceDirectory(
                 project.layout.buildDirectory.dir("generated/resguarder/com/kernelflux/resguarder")
                     .get().asFile.absolutePath
             )
 
-            // 让 Task 在 Java 编译后执行（确保 R.class 已生成）
+            // 2. Java build task depends on taskProvider
             project.tasks.matching { it.name == "compile${variant.name.replaceFirstChar { it.uppercaseChar() }}JavaWithJavac" }
-                .configureEach { finalizedBy(taskProvider) }
-            // 如果是 Kotlin 项目，也加上
+                .configureEach { dependsOn(taskProvider) }
+
+            // 3. Kapt task depends on taskProvider
+            project.tasks.matching { it.name == "kaptGenerateStubs${variant.name.replaceFirstChar { it.uppercaseChar() }}Kotlin" }
+                .configureEach { dependsOn(taskProvider) }
+
+            // 4. Kotlin build task depends on taskProvider
             project.tasks.matching { it.name == "compile${variant.name.replaceFirstChar { it.uppercaseChar() }}Kotlin" }
-                .configureEach { finalizedBy(taskProvider) }
+                .configureEach { dependsOn(taskProvider) }
 
             variant.instrumentation.transformClassesWith(
                 ResguarderClassVisitorFactory::class.java,

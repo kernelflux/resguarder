@@ -12,7 +12,7 @@ object ResScanner {
     )
 
     /**
-     * 扫描 res 目录，返回资源名-类型映射、被引用的 drawable 名集合、所有 drawable 目录
+     * Scan res directories and return resource name-type mapping, referenced drawable name set, and all drawable directories
      */
     fun scan(projectDir: File): Result {
         val resDirs = findAllResDirs(projectDir)
@@ -51,7 +51,7 @@ object ResScanner {
         val usedDrawables = mutableSetOf<String>()
         val factory = DocumentBuilderFactory.newInstance()
 
-        // 1. 扫描 styles/themes 里的图片引用
+        // 1. Scan image references in styles/themes
         for (styleDir in styleDirs) {
             styleDir.listFiles { f -> f.extension.equals("xml", ignoreCase = true) }
                 ?.forEach { file ->
@@ -88,7 +88,7 @@ object ResScanner {
                 }
         }
 
-        // 2. 扫描 layout 里的图片引用
+        // 2. Scan image references in layouts
         for (layoutDir in layoutDirs) {
             layoutDir.listFiles { f -> f.extension.equals("xml", ignoreCase = true) }
                 ?.forEach { file ->
@@ -123,12 +123,12 @@ object ResScanner {
                 }
         }
 
-        // 3. 资源名 -> 类型
+        // 3. Resource name -> type mapping
         for (drawableName in usedDrawables) {
             var type = "other"
             var file: File? = null
 
-            // 检查所有 drawable 目录，兼容大小写后缀
+            // Check all drawable directories, case-insensitive suffix support
             for (dir in drawableDirs) {
                 dir.listFiles()?.forEach { f ->
                     val name = f.nameWithoutExtension
@@ -138,7 +138,7 @@ object ResScanner {
                             "xml" -> file = f
                         }
                     }
-                    // 9.png 特殊处理
+                    // Special handling for 9.png
                     if (f.name.equals("$drawableName.9.png", ignoreCase = true)) {
                         file = f
                     }
@@ -196,7 +196,7 @@ object ResScanner {
     }
 
     /**
-     * 递归查找所有 res 目录（支持多 module/多 sourceSet）
+     * Recursively find all res directories (supports multi-module/multi-sourceSet)
      */
     private fun findAllResDirs(projectDir: File): Set<File> {
         val resDirs = mutableSetOf<File>()
@@ -209,7 +209,7 @@ object ResScanner {
             }
         }
         scan(File(projectDir, "src"))
-        // 兼容 buildSrc、其它自定义结构
+        // Compatible with buildSrc and other custom structures
         File(projectDir, "src").listFiles()?.forEach { scan(it) }
         return resDirs
     }
