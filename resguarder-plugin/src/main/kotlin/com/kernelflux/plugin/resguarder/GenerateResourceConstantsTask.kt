@@ -89,6 +89,7 @@ abstract class GenerateResourceConstantsTask : DefaultTask() {
             project.projectDir,
             "build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/$variant/processDebugResources/R.jar"
         )
+        ResguarderLogger.log("R.jar exist: ${rJar.exists()}， packageName： $packageName")
         if (rJar.exists() && packageName != null) {
             ResguarderLogger.log("R.jar found: ${rJar.absolutePath}， packageName： $packageName")
             val allResMaps =
@@ -155,9 +156,8 @@ abstract class GenerateResourceConstantsTask : DefaultTask() {
                 bigIds.filter { idTypeMap[it]?.equals("bitmap", ignoreCase = true) == true }.toSet()
             file.writeText(
                 buildBigImagesKtContent(
-                    packageName,
-                    generateClassName,
-                    filteredBigImageIds
+                    className = generateClassName,
+                    bigImageIds = filteredBigImageIds
                 )
             )
 
@@ -177,7 +177,7 @@ abstract class GenerateResourceConstantsTask : DefaultTask() {
 
 
     private fun buildBigImagesKtContent(
-        packageName: String,
+        packageName: String = "com.kernelflux.resguarder",
         className: String,
         bigImageIds: Set<Int>
     ): String {

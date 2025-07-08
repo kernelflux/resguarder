@@ -36,21 +36,19 @@ class ResguarderPlugin : Plugin<Project> {
                     outputDir.set(project.layout.buildDirectory.dir("generated/resguarder/com/kernelflux/resguarder"))
                 }
 
-            // 1. add to sourceSet
+
             variant.sources.java?.addStaticSourceDirectory(
                 project.layout.buildDirectory.dir("generated/resguarder/com/kernelflux/resguarder")
                     .get().asFile.absolutePath
             )
-
-            // 2. Java build task depends on taskProvider
+            project.tasks.matching { it.name == "process${variant.name.replaceFirstChar { it.uppercaseChar() }}Resources" }
+                .configureEach { finalizedBy(taskProvider) }
             project.tasks.matching { it.name == "compile${variant.name.replaceFirstChar { it.uppercaseChar() }}JavaWithJavac" }
                 .configureEach { dependsOn(taskProvider) }
 
-            // 3. Kapt task depends on taskProvider
             project.tasks.matching { it.name == "kaptGenerateStubs${variant.name.replaceFirstChar { it.uppercaseChar() }}Kotlin" }
                 .configureEach { dependsOn(taskProvider) }
 
-            // 4. Kotlin build task depends on taskProvider
             project.tasks.matching { it.name == "compile${variant.name.replaceFirstChar { it.uppercaseChar() }}Kotlin" }
                 .configureEach { dependsOn(taskProvider) }
 
