@@ -2,7 +2,7 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 [![Gradle Plugin](https://img.shields.io/badge/gradle-plugin-brightgreen.svg)]()
 
-Resguarder is an Android resource obfuscation and protection plugin designed to enhance APK security and reduce the risk of resource decompilation and misuse. It supports resource renaming, reference tracking, and integrates seamlessly with existing Android projects.
+Resguarder is a plugin for Android development projects that detects large image resources and supports custom loading strategies to prevent OOM issues on low- and mid-end devices. It is easy to use and integrates seamlessly with existing Android projects.
 
 ## Features
 
@@ -77,7 +77,13 @@ resguarder {
 
 ```kotlin
 resguarder {
-    allBitmapUseImageLoader = true
+    maxWidth = 400
+    maxHeight = 400
+    maxFileSize = 100 * 1024
+    resguarderResGenerateClassName = "MyResguarderBigImages"
+    allBitmapUseImageLoader = false
+    enableLog = true
+    enableFileLog = true
 }
 ```
 
@@ -126,13 +132,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by various Android security and obfuscation tools
 - Built with modern Android development practices
 
-## Support
-
-- 📧 Email: your-email@example.com
-- 🐛 Issues: [GitHub Issues](https://github.com/your-repo/resguarder/issues)
-- 📖 Documentation: [Wiki](https://github.com/your-repo/resguarder/wiki)
-
----
 
 **Note**: This plugin is designed for legitimate use cases such as protecting intellectual property and preventing resource theft. Please ensure compliance with applicable laws and regulations when using this tool.
 
