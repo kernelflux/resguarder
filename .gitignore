@@ -1,0 +1,12 @@
+*.iml
+.gradle
+.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+gradle.properties
+# 忽略所有子目录下的 gradle.properties
+**/gradle.properties
